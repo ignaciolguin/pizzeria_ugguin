@@ -1,0 +1,114 @@
+Project pizzeria_ugguin {
+  database_type: 'PostgreSQL'
+  Note: 'Ejemplo de base de datos comercial'
+}
+
+Table orders {
+  order_id serial pk
+  order_number varchar(unique)
+  created_at timestamp  
+  customer_id int
+  address_id int
+  order_status ENUM (
+  'pending', 'preparing', 'in_transit', 'delivered', 'cancelled'
+)
+  shift_id int
+  Indexes {
+      (customer_id, order_status, created_at) [name: "idx_order_customer_date_status"]
+      created_at
+    }
+}
+
+Table order_items{ 
+  order_id int 
+  item_id int 
+  quantity int [Note:"CHECK (quantity > 0)"]
+  unit_price DECIMAL(10,2) 
+  Indexes {
+    (order_id, item_id) [pk]
+  }
+}
+
+Table customers{
+  customer_id serial pk
+  customer_firstname varchar(200)
+  customer_lastname varchar(200)
+}
+
+Table address{
+  address_id serial pk
+  delivery_address1 varchar(200)
+  delivery_address2 varchar(200)
+  delivery_city varchar(50)
+  delivery_zipcode varchar(20)
+}
+
+Table item{
+  item_id serial pk
+  sku varchar(20)
+  item_name varchar(100)
+  item_type varchar(100)
+  item_size varchar(20)
+  item_price decimal(10,2)
+}
+
+Table ingredient{
+  ing_id serial pk
+  ing_name varchar(200)
+  ing_weight int
+  ing_measure varchar(20)
+  ing_price decimal(5,2)
+}
+
+Table recipe{
+  item_id int [ref: > item.item_id]  
+  ing_id int [ref: > ingredient.ing_id]
+  quantity int
+  Indexes {
+    (item_id, ing_id) [pk]
+  }
+}
+
+Table ingredient_inventory{
+  inv_id serial pk
+  ing_id int
+  quantity int
+}
+
+Table staff{
+  staff_id serial pk
+  first_name varchar(100)
+  last_name varchar(100)
+  position varchar(100)
+  hourly_rate decimal(5,2)
+}
+
+Table shift{
+  shift_id int pk
+  day_of_week varchar(20)
+  start_time time 
+  end_time time 
+}
+
+Table rotation{
+  rot_id int pk
+  date date 
+  shift_id int
+  staff_id int
+}
+
+Ref: "customers"."customer_id" < "orders"."customer_id"
+
+Ref: "address"."address_id" < "orders"."address_id"
+
+Ref: "ingredient"."ing_id" < "ingredient_inventory"."ing_id"
+  
+Ref: "shift"."shift_id" < "rotation"."shift_id"
+
+Ref: "staff"."staff_id" < "rotation"."staff_id"
+
+Ref: "shift"."shift_id" < "orders"."shift_id"
+
+Ref: "orders"."order_id" < "order_items"."order_id"
+
+Ref: "item"."item_id" < "order_items"."item_id"
